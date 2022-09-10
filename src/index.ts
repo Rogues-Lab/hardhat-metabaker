@@ -1,4 +1,4 @@
-import { extendConfig, extendEnvironment, task } from "hardhat/config";
+import { extendConfig, extendEnvironment, task, types } from "hardhat/config";
 import { lazyObject } from "hardhat/plugins";
 import { HardhatConfig, HardhatUserConfig } from "hardhat/types";
 import path from "path";
@@ -51,3 +51,47 @@ extendEnvironment((hre) => {
 task("sayHello", async (args, hre) => {
   console.log(hre.example.sayHello());
 });
+
+// Using this guide
+// https://medium.com/laika-lab/building-your-own-custom-hardhat-plugins-from-scratch-232ab433b078
+task("collectNftMetadata", "Collects Metadata into local folder for processing")
+    .addParam("contract", "Contract name to sync") // add contract parameters
+    .addOptionalParam( // add optional address parameters
+      "address",
+      "Address of that specific contract",
+      "", // default value
+      types.string
+    )
+  .addOptionalParam( // add optional address parameters
+    "tokenList",
+    "List of that token numbers for that contract",
+    "", // default value
+    types.string
+  ).setAction(async (taskArgs, hre) => {
+    // Logic for that task here
+    const { contract, address: contractAddress } = taskArgs;
+    const { abi } = await hre.artifacts.readArtifact(contract);
+    console.log(`Syncing the ABI of ${contract} contract...`);
+
+    // Hit contract to get number of tokens, then start iterating
+    // Check if IERC721Enumerable compatible
+    // TODO Call contract
+    
+    // Get Metadata for token X
+    //TODO
+
+    // retrieve image data from meta
+    const imgUrl = "https://lh3.googleusercontent.com/d5OHtpPscz6VLMbA5vizoZ0vZhMEcUtm03No-r8sgpzORgitkU8pSvlBqb2TMb_Wfky2hHfzKhtAbQGTag9F4JGM94C72z2Qk3GvVqs=s0";
+    const imgResponse = await fetch(
+      imgUrl,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    // Store in folder for token
+
+    console.log(`Got data of ${imgResponse}...`);
+
+
+  })

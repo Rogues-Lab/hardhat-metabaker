@@ -31,5 +31,10 @@ declare module "hardhat/types/runtime" {
   export interface HardhatRuntimeEnvironment {
     example: ExampleHardhatRuntimeEnvironmentField;
     data1: ExampleHardhatRuntimeEnvironmentField;
+    laikaSync: (
+      hre: HardhatRuntimeEnvironment,
+      contract: string,
+      contractAddress: string
+    ) => Promise<void>;
   }
 }
