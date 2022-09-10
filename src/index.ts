@@ -1,4 +1,4 @@
-import { extendConfig, extendEnvironment } from "hardhat/config";
+import { extendConfig, extendEnvironment, task } from "hardhat/config";
 import { lazyObject } from "hardhat/plugins";
 import { HardhatConfig, HardhatUserConfig } from "hardhat/types";
 import path from "path";
@@ -46,4 +46,8 @@ extendEnvironment((hre) => {
   // We use lazyObject to avoid initializing things until they are actually
   // needed.
   hre.example = lazyObject(() => new ExampleHardhatRuntimeEnvironmentField());
+});
+
+task("sayHello", async (args, hre) => {
+  console.log(hre.example.sayHello());
 });
