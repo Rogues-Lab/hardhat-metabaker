@@ -56,3 +56,39 @@ README should look like.
 ## Migrating from Buidler?
 
 Take a look at [the migration guide](MIGRATION.md)!
+
+
+## How to package up code 
+`npm pack` can be used to package up the library.
+
+`"hardhat-metabaker-0.0.1.tgz"` will be generated
+
+
+## using this lib before NPM publish
+(recommend deleting from node_module before reinstalling)
+
+We need to add the plugin into the packages.json of the hardhard project that we are used in.
+    `"hardhat-metabaker": "file:../../../../../rogues/hardhat-metabaker/hardhat-metabaker-0.0.1.tgz"`
+
+Then install (with npm install / yarn install), this will copy the files into the local node_modules
+
+## Hardhat Config
+`hardhat.config.ts` we need to add `import "hardhat-metabaker";`
+
+## Testing it
+Once it is installed and config added.
+
+```bash
+npm or yarn run hardhat
+```
+
+We should now see the new tasks in hardhat output, like below:
+
+```bash
+AVAILABLE TASKS:
+
+  accounts              Prints the list of accounts
+  check                 Check whatever you need
+  clean                 Clears the cache and deletes all artifacts
+  collectNftMetadata    Collects Metadata into local folder for processing
+```
