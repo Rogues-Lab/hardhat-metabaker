@@ -10,6 +10,8 @@ We supply tasks to aid in the Metadata storage:
 
 https://nft.storage/ is used as the web3 storage.
 
+https://nft.storage/docs/#using-the-javascript-api
+
 ## Installation
 
 To use this plugins
