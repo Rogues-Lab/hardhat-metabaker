@@ -9,6 +9,9 @@ const config: HardhatUserConfig = {
   paths: {
     newPath: "asd",
   },
+  metabaker: {
+    nftStorageKey: "",
+  },
 };
 
 export default config;

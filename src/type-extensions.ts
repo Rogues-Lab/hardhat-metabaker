@@ -5,6 +5,7 @@ import "hardhat/types/config";
 import "hardhat/types/runtime";
 
 import { ExampleHardhatRuntimeEnvironmentField } from "./ExampleHardhatRuntimeEnvironmentField";
+import {MetabakerConfig} from "./MetabakerConfig";
 
 declare module "hardhat/types/config" {
   // This is an example of an extension to one of the Hardhat config values.
@@ -23,13 +24,20 @@ declare module "hardhat/types/config" {
   export interface ProjectPathsConfig {
     newPath: string;
   }
+
+  export interface HardhatConfig {
+    metabaker: MetabakerConfig;
+  }
+
+  export interface HardhatUserConfig {
+    metabaker: MetabakerConfig;
+  }
 }
 
 declare module "hardhat/types/runtime" {
   // This is an example of an extension to the Hardhat Runtime Environment.
   // This new field will be available in tasks' actions, scripts, and tests.
   export interface HardhatRuntimeEnvironment {
-    example: ExampleHardhatRuntimeEnvironmentField;
-    data1: ExampleHardhatRuntimeEnvironmentField;
+    metabaker: MetabakerConfig;
   }
 }

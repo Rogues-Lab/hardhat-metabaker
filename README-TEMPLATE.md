@@ -18,7 +18,7 @@ This plugin will help you with world domination by implementing a simple tic-tac
 npm install <your npm package name> [list of peer dependencies]
 ```
 
-Import the plugin in your `hardhat.config.js`:
+Import the plugin in your `hardhat.config.ts`:
 
 ```js
 require("<your plugin npm package name>");

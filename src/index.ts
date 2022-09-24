@@ -1,20 +1,22 @@
-import { extendConfig, extendEnvironment, task, types } from "hardhat/config";
-import { lazyObject } from "hardhat/plugins";
-import { HardhatConfig, HardhatUserConfig } from "hardhat/types";
-import path from "path";
-
-// Import the NFTStorage class and File constructor from the 'nft.storage' package
-import { NFTStorage, File } from 'nft.storage';
 // // The 'mime' npm package helps us set the correct file type on our File objects
 // import mime from 'mime';
 // The 'fs' builtin module on Node.js provides access to the file system
-import fs from 'fs';
-
+// tslint:disable-next-line:no-implicit-dependencies
+import "@nomiclabs/hardhat-ethers/internal/type-extensions";
+import { BigNumber } from "ethers";
+import fs from "fs";
+import { extendConfig, extendEnvironment, task, types } from "hardhat/config";
+import { HardhatPluginError, lazyObject } from "hardhat/plugins";
+import {HardhatConfig, HardhatRuntimeEnvironment, HardhatUserConfig} from "hardhat/types";
+import { File, NFTStorage } from "nft.storage";
+import path from "path";
 
 import { ExampleHardhatRuntimeEnvironmentField } from "./ExampleHardhatRuntimeEnvironmentField";
 // This import is needed to let the TypeScript compiler know that it should include your type
 // extensions in your npm package's types file.
 import "./type-extensions";
+
+// Import the NFTStorage class and File constructor from the 'nft.storage' package
 // import { NodeStringDecoder } from "string_decoder";
 
 extendConfig(
@@ -46,37 +48,31 @@ extendConfig(
       }
     }
 
+    config.metabaker = userConfig.metabaker;
+
     config.paths.newPath = newPath;
   }
 );
 
-extendEnvironment((hre) => {
-  // We add a field to the Hardhat Runtime Environment here.
-  // We use lazyObject to avoid initializing things until they are actually
-  // needed.
-  hre.example = lazyObject(() => new ExampleHardhatRuntimeEnvironmentField());
-});
-
-task("sayHello", async (args, hre) => {
-  console.log(hre.example.sayHello());
-});
-
 // Using this guide
 // https://medium.com/laika-lab/building-your-own-custom-hardhat-plugins-from-scratch-232ab433b078
 task("collectNftMetadata", "Collects Metadata into local folder for processing")
-    .addParam("contract", "Contract name to sync") // add contract parameters
-    .addOptionalParam( // add optional address parameters
-      "address",
-      "Address of that specific contract",
-      "", // default value
-      types.string
-    )
-  .addOptionalParam( // add optional address parameters
+  .addParam("contract", "Contract name to sync") // add contract parameters
+  .addOptionalParam(
+    // add optional address parameters
+    "address",
+    "Address of that specific contract",
+    "", // default value
+    types.string
+  )
+  .addOptionalParam(
+    // add optional address parameters
     "tokenList",
     "List of that token numbers for that contract",
     "", // default value
     types.string
-  ).setAction(async (taskArgs, hre) => {
+  )
+  .setAction(async (taskArgs, hre) => {
     // Logic for that task here
     const { contract, address: contractAddress } = taskArgs;
     const { abi } = await hre.artifacts.readArtifact(contract);
@@ -85,131 +81,126 @@ task("collectNftMetadata", "Collects Metadata into local folder for processing")
     // Hit contract to get number of tokens, then start iterating
     // Check if IERC721Enumerable compatible
     // TODO Call contract
-    
+
     // Get Metadata for token X
-    //TODO
+    // TODO
 
     // retrieve image data from meta
-    const imgUrl = "https://lh3.googleusercontent.com/d5OHtpPscz6VLMbA5vizoZ0vZhMEcUtm03No-r8sgpzORgitkU8pSvlBqb2TMb_Wfky2hHfzKhtAbQGTag9F4JGM94C72z2Qk3GvVqs=s0";
-    const imgResponse = await fetch(
-      imgUrl,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    const imgUrl =
+      "https://lh3.googleusercontent.com/d5OHtpPscz6VLMbA5vizoZ0vZhMEcUtm03No-r8sgpzORgitkU8pSvlBqb2TMb_Wfky2hHfzKhtAbQGTag9F4JGM94C72z2Qk3GvVqs=s0";
+    const imgResponse = await fetch(imgUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
     // Store in folder for token
 
     console.log(`Got data of ${imgResponse}...`);
-
-
-  })
-
-
-
-// Using this guide
-// https://medium.com/laika-lab/building-your-own-custom-hardhat-plugins-from-scratch-232ab433b078
-task("collectNftMetadata", "Collects Metadata into local folder for processing")
-    .addParam("contract", "Contract name to sync") // add contract parameters
-    .addOptionalParam( // add optional address parameters
-      "address",
-      "Address of that specific contract",
-      "", // default value
-      types.string
-    )
-  .addOptionalParam( // add optional address parameters
-    "tokenList",
-    "List of that token numbers for that contract",
-    "", // default value
-    types.string
-  ).setAction(async (taskArgs, hre) => {
-    // Logic for that task here
-    const { contract, address: contractAddress } = taskArgs;
-    const { abi } = await hre.artifacts.readArtifact(contract);
-    console.log(`Syncing the ABI of ${contract} contract...`);
-
-    // Hit contract to get number of tokens, then start iterating
-    // Check if IERC721Enumerable compatible
-    // TODO Call contract
-    
-    // Get Metadata for token X
-    //TODO
-
-    // retrieve image data from meta
-    const imgUrl = "https://lh3.googleusercontent.com/d5OHtpPscz6VLMbA5vizoZ0vZhMEcUtm03No-r8sgpzORgitkU8pSvlBqb2TMb_Wfky2hHfzKhtAbQGTag9F4JGM94C72z2Qk3GvVqs=s0";
-    const imgResponse = await fetch(
-      imgUrl,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-    // Store in folder for token
-
-    console.log(`Got data of ${imgResponse}...`);
-
-
-});
+  });
 
 /**
-  * A helper to read a file from a location on disk and return a File object.
-  * Note that this reads the entire file into memory and should not be used for
-  * very large files. 
-  * @param {string} filePath the path to a file to store
-  * @returns {File} a File object containing the file content
-  */
- async function fileFromPath(filePath: string) {
-  const content =  fs.readFileSync(filePath)
+ * A helper to read a file from a location on disk and return a File object.
+ * Note that this reads the entire file into memory and should not be used for
+ * very large files.
+ * @param {string} filePath the path to a file to store
+ * @returns {File} a File object containing the file content
+ */
+async function fileFromPath(filePath: string) {
+  const content = fs.readFileSync(filePath);
   // const type = mime.getType(filePath)
 
   // return new File([content], path.basename(filePath), { type })
-  return new File([content], path.basename(filePath))
+  return new File([content], path.basename(filePath));
 }
 
-async function storeNFT(imagePath: string, name: string, description: string, NFTStorageKey: string) {
+async function storeNFT(
+  imagePath: string,
+  name: string,
+  description: string,
+  NFTStorageKey: string
+) {
   // load the file from disk
-  const image = await fileFromPath(imagePath)
+  const image = await fileFromPath(imagePath);
 
   // create a new NFTStorage client using our API key
-  const nftstorage = new NFTStorage({ token: NFTStorageKey })
+  const nftstorage = new NFTStorage({ token: NFTStorageKey });
 
   // call client.store, passing in the image & metadata
   return nftstorage.store({
-      image,
-      name,
-      description,
-  })
+    image,
+    name,
+    description,
+  });
 }
-
 
 // Using this guide
 // https://medium.com/laika-lab/building-your-own-custom-hardhat-plugins-from-scratch-232ab433b078
 task("publishMetaToNFTStorage", "send data to web3")
-    .addParam("nftStorageKey", "Free API key from https://nft.storage/") // add contract parameters
-    .addOptionalParam( // add optional address parameters
-      "address",
-      "Address of that specific contract",
-      "", // default value
-      types.string
-    )
+  .addParam("contract", "Contract name to sync") // add contract parameters
+  .addOptionalParam(
+    // add optional address parameters
+    "address",
+    "Address of that specific contract",
+    "", // default value
+    types.string
+  )
+  .addParam(
+    // token count will be either a number or the string 'contract' specifying that we use the contract's totalSupply
+    "count",
+    "The number of tokens to reveal, or 'contract' to use the current ERC721 totalSupply value",
+    "contract",
+    types.string
+  )
   .setAction(async (taskArgs, hre) => {
     // Logic for that task here
-    const { nftStorageKey, address: contractAddress } = taskArgs;
+    const nftStorageKey: string | null = hre.config.metabaker.nftStorageKey;
+    const { contract, address: contractAddress } = taskArgs;
+    const { abi } = await hre.artifacts.readArtifact(contract);
+
+    // get count from input or optionally from contract
+    const countAsString: string = taskArgs.count;
+    let count: BigNumber = BigNumber.from(0);
+    try {
+      if (countAsString === "contract") {
+        // use count from contract, leave as default (0)
+        const ethers = hre.ethers;
+        const ethersContract = await ethers.getContractAt(abi, contractAddress);
+        count = await ethersContract.functions.totalSupply();
+        if (count.eq(BigNumber.from(0))) {
+          throw new HardhatPluginError(
+            `Invalid count parameter: ${countAsString}`
+          );
+        }
+      }
+    } catch (e: Error | any) {
+      throw new HardhatPluginError(
+        e?.message ?? "Error parsing count parameter"
+      ); // parse error or our own
+    }
+
+    // require nftStorageKey
+    if (!nftStorageKey) {
+      throw new HardhatPluginError(
+        "Please set your nftStorageKey in the metabaker config"
+      );
+    }
     console.log(`using the nftStorageKey of ${nftStorageKey}`);
 
-    //Publish to nft storage
-    //https://nft.storage/docs/#using-the-javascript-api
-    const endpoint = 'https://api.nft.storage'
-    
-    const storage = new NFTStorage({ endpoint, nftStorageKey })
-      const cid = await storage.storeDirectory([
-        new File([await fs.promises.readFile('pinpie.jpg')], 'pinpie.jpg'),
-        new File([await fs.promises.readFile('seamonster.jpg')], 'seamonster.jpg'),
-      ])
-      console.log({ cid })
-      const status = await storage.status(cid)
-      console.log(status)
+    // Publish to nft storage
+    // https://nft.storage/docs/#using-the-javascript-api
+    const endpoint = new URL("https://api.nft.storage");
+    const storage = new NFTStorage({ endpoint, token: nftStorageKey });
+
+    // TODO: make CAR or upload directory
+    const cid = await storage.storeDirectory([
+      new File([await fs.promises.readFile("pinpie.jpg")], "pinpie.jpg"),
+      new File(
+        [await fs.promises.readFile("seamonster.jpg")],
+        "seamonster.jpg"
+      ),
+    ]);
+    console.log({ cid });
+    const status = await storage.status(cid);
+    console.log(status);
 
     // storeNFT()
-
   });
