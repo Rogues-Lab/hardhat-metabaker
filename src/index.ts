@@ -199,6 +199,16 @@ task("publishMetaToNFTStorage", "send data to web3")
 
     //Publish to nft storage
     //https://nft.storage/docs/#using-the-javascript-api
+    const endpoint = 'https://api.nft.storage'
+    
+    const storage = new NFTStorage({ endpoint, nftStorageKey })
+      const cid = await storage.storeDirectory([
+        new File([await fs.promises.readFile('pinpie.jpg')], 'pinpie.jpg'),
+        new File([await fs.promises.readFile('seamonster.jpg')], 'seamonster.jpg'),
+      ])
+      console.log({ cid })
+      const status = await storage.status(cid)
+      console.log(status)
 
     // storeNFT()
 
