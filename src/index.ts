@@ -161,7 +161,7 @@ task("publishMetaToNFTStorage", "send data to web3")
     let count: BigNumber = BigNumber.from(0);
     try {
       if (countAsString === "contract") {
-        // use count from contract, leave as default (0)
+        // use count from contract
         const ethers = hre.ethers;
         const ethersContract = await ethers.getContractAt(abi, contractAddress);
         count = await ethersContract.functions.totalSupply();
