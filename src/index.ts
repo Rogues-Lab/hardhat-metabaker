@@ -308,5 +308,10 @@ task("publishMetaToNFTStorage", "send data to web3")
     console.log("Image pin status:", status.pin.status);
     console.log("Meta pin status:", statusMeta.pin.status);
 
+    console.log("\nSet your nft base uri to:", `ipfs://${cidMeta}`);
+    console.log(
+      "(you may need a trailing slash depending on your smart contract)"
+    );
+
     // storeNFT()
   });
