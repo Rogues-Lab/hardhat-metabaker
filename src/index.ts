@@ -253,13 +253,13 @@ task("publishMetaToNFTStorage", "send data to web3")
         const ethers = hre.ethers;
         const ethersContract = await ethers.getContractAt(abi, contractAddress);
         count = await ethersContract.functions.totalSupply();
-        if (count.eq(BigNumber.from(0))) {
-          throw new HardhatPluginError(
-            `Invalid count parameter: ${countAsString}`
-          );
-        }
       } else {
         count = BigNumber.from(countAsString);
+      }
+      if (count.eq(BigNumber.from(0))) {
+        throw new HardhatPluginError(
+          `Invalid count parameter: ${countAsString}`
+        );
       }
     } catch (e: Error | any) {
       throw new HardhatPluginError(
