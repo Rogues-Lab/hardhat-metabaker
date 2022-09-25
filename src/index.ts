@@ -215,8 +215,6 @@ async function processImages(env: HardhatRuntimeEnvironment, count: BigNumber) {
   }
 }
 
-// Using this guide
-// https://medium.com/laika-lab/building-your-own-custom-hardhat-plugins-from-scratch-232ab433b078
 task("publishMetaToNFTStorage", "send data to web3")
   .addParam("contract", "Contract name to sync") // add contract parameters
   .addOptionalParam(
@@ -300,8 +298,6 @@ task("publishMetaToNFTStorage", "send data to web3")
       console.error("Empty metadata");
       return;
     }
-
-    // TODO: make CAR for upload optimization
 
     console.log("Storing metadata...");
     const cidMeta = await storage.storeDirectory(metaFiles);
