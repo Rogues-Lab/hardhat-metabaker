@@ -20,6 +20,40 @@ To use this plugins
 npm install @rogueslab/hardhat-metabaker
 ```
 
+Extend your hardhat.config and supply the `nft.storage` API key:
+
+in JavaScript (`hardhat.config.js`):
+```javascript
+require("@rogueslab/hardhat-metabaker");
+
+const config = {
+  // solidity etc
+  metabaker: {
+    nftStorageKey: "your nft.storage API key here, ideally loaded from .env",
+    imageExtension: "jpg",
+    baseMetadataPath: "./metadata"
+  }
+}
+
+```
+
+in TypeScript (`hardhat.config.ts`):
+
+```typescript
+import { HardhatUserConfig } from "hardhat/types";
+import "@rogueslab/hardhat-metabaker";
+
+const config: HardhatUserConfig = {
+  // solidity etc
+  metabaker: {
+    nftStorageKey: "your nft.storage API key here, ideally loaded from .env",
+    imageExtension: "jpg",
+    baseMetadataPath: "./metadata"
+  }
+}
+
+```
+
 ## Plugin development
 
 Make sure to read our [Plugin Development Guide](https://hardhat.org/advanced/building-plugins.html) to learn how to build a plugin.

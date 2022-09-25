@@ -39,7 +39,7 @@ The artifact format is now supplemented with build information and debug artifac
 
 ## Updating your plugin's tests
 
-Apart from updating types and names, fixture projects need their `buidler.config.js` renamed to `hardhat.config.js`.
+Apart from updating types and names, fixture projects need their `buidler.config.js` renamed to `hardhat.config.ts`.
 
 ### Changes needed to your test projects' config
 
