@@ -305,8 +305,8 @@ task("publishMetaToNFTStorage", "send data to web3")
     console.log("Meta CID:", cidMeta);
     const status = await storage.status(cid);
     const statusMeta = await storage.status(cidMeta);
-    console.log(status);
-    console.log(statusMeta);
+    console.log("Image pin status:", status.pin.status);
+    console.log("Meta pin status:", statusMeta.pin.status);
 
     // storeNFT()
   });
