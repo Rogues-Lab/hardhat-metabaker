@@ -301,6 +301,9 @@ task("publishMetaToNFTStorage", "send data to web3")
     // TODO: make CAR for upload optimization
 
     const cidMeta = await storage.storeDirectory(metaFiles);
+
+    fs.rmSync(getUploadDir(hre), { recursive: true, force: true });
+
     console.log("Image CID:", cid);
     console.log("Meta CID:", cidMeta);
     const status = await storage.status(cid);
