@@ -11,6 +11,8 @@ const config: HardhatUserConfig = {
   },
   metabaker: {
     nftStorageKey: "",
+    baseMetadataPath: "./metadata",
+    imageExtension: "jpg",
   },
 };
 

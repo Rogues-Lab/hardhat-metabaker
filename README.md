@@ -29,7 +29,9 @@ require("@rogueslab/hardhat-metabaker");
 const config = {
   // solidity etc
   metabaker: {
-      nftStorageKey: "your nft.storage API key here, ideally loaded from .env"
+    nftStorageKey: "your nft.storage API key here, ideally loaded from .env",
+    imageExtension: "jpg",
+    baseMetadataPath: "./metadata"
   }
 }
 
@@ -44,7 +46,9 @@ import "@rogueslab/hardhat-metabaker";
 const config: HardhatUserConfig = {
   // solidity etc
   metabaker: {
-    nftStorageKey: "your nft.storage API key here, ideally loaded from .env"
+    nftStorageKey: "your nft.storage API key here, ideally loaded from .env",
+    imageExtension: "jpg",
+    baseMetadataPath: "./metadata"
   }
 }
 

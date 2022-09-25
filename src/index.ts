@@ -132,6 +132,16 @@ async function storeNFT(
   });
 }
 
+async function getMetadata(count: BigNumber): Promise<File[]> {
+  // TODO
+  return [];
+}
+
+async function getImages(count: BigNumber): Promise<File[]> {
+  // TODO
+  return [];
+}
+
 // Using this guide
 // https://medium.com/laika-lab/building-your-own-custom-hardhat-plugins-from-scratch-232ab433b078
 task("publishMetaToNFTStorage", "send data to web3")
@@ -183,7 +193,19 @@ task("publishMetaToNFTStorage", "send data to web3")
         "Please set your nftStorageKey in the metabaker config"
       );
     }
-    console.log(`using the nftStorageKey of ${nftStorageKey}`);
+
+    const imageFiles = await getImages(count);
+    const metaFiles = await getMetadata(count);
+
+    if (imageFiles.length === 0) {
+      console.error("Empty images");
+      return;
+    }
+
+    if (metaFiles.length === 0) {
+      console.error("Empty metadata");
+      return;
+    }
 
     // Publish to nft storage
     // https://nft.storage/docs/#using-the-javascript-api
@@ -191,16 +213,14 @@ task("publishMetaToNFTStorage", "send data to web3")
     const storage = new NFTStorage({ endpoint, token: nftStorageKey });
 
     // TODO: make CAR or upload directory
-    const cid = await storage.storeDirectory([
-      new File([await fs.promises.readFile("pinpie.jpg")], "pinpie.jpg"),
-      new File(
-        [await fs.promises.readFile("seamonster.jpg")],
-        "seamonster.jpg"
-      ),
-    ]);
-    console.log({ cid });
+    const cid = await storage.storeDirectory(imageFiles);
+    const cidMeta = await storage.storeDirectory(imageFiles);
+    console.log("Image CID:", cid);
+    console.log("Meta CID:", cidMeta);
     const status = await storage.status(cid);
+    const statusMeta = await storage.status(cidMeta);
     console.log(status);
+    console.log(statusMeta);
 
     // storeNFT()
   });
