@@ -277,14 +277,17 @@ task("publishMetaToNFTStorage", "send data to web3")
     // make sure the upload dir is refreshed
     fs.rmSync(getUploadDir(hre), { recursive: true, force: true });
 
+    console.log("Processing images...");
     await processImages(hre, count);
     const imageFiles = await getImages(hre, count);
     // Publish to nft storage
     // https://nft.storage/docs/#using-the-javascript-api
     const endpoint = new URL("https://api.nft.storage");
     const storage = new NFTStorage({ endpoint, token: nftStorageKey });
+    console.log("Storing images...");
     const cid = await storage.storeDirectory(imageFiles);
 
+    console.log("Processing metadata...");
     await processMetadata(hre, cid, count);
     const metaFiles = await getMetadata(hre);
 
@@ -300,6 +303,7 @@ task("publishMetaToNFTStorage", "send data to web3")
 
     // TODO: make CAR for upload optimization
 
+    console.log("Storing metadata...");
     const cidMeta = await storage.storeDirectory(metaFiles);
 
     fs.rmSync(getUploadDir(hre), { recursive: true, force: true });
