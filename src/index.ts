@@ -5,13 +5,17 @@
 import "@nomiclabs/hardhat-ethers/internal/type-extensions";
 import { BigNumber } from "ethers";
 import fs from "fs";
-import { extendConfig, extendEnvironment, task, types } from "hardhat/config";
-import { HardhatPluginError, lazyObject } from "hardhat/plugins";
-import {HardhatConfig, HardhatRuntimeEnvironment, HardhatUserConfig} from "hardhat/types";
-import { File, NFTStorage } from "nft.storage";
+import { TASK_CLEAN, TASK_COMPILE } from "hardhat/builtin-tasks/task-names";
+import { extendConfig, task, types } from "hardhat/config";
+import { HardhatPluginError } from "hardhat/plugins";
+import {
+  HardhatConfig,
+  HardhatRuntimeEnvironment,
+  HardhatUserConfig,
+} from "hardhat/types";
+import { Blob, File, NFTStorage } from "nft.storage";
 import path from "path";
 
-import { ExampleHardhatRuntimeEnvironmentField } from "./ExampleHardhatRuntimeEnvironmentField";
 // This import is needed to let the TypeScript compiler know that it should include your type
 // extensions in your npm package's types file.
 import "./type-extensions";
@@ -19,38 +23,15 @@ import "./type-extensions";
 // Import the NFTStorage class and File constructor from the 'nft.storage' package
 // import { NodeStringDecoder } from "string_decoder";
 
+const TEMPLATE_NAME = "template.json";
+
 extendConfig(
   (config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) => {
-    // We apply our default config here. Any other kind of config resolution
-    // or normalization should be placed here.
-    //
-    // `config` is the resolved config, which will be used during runtime and
-    // you should modify.
-    // `userConfig` is the config as provided by the user. You should not modify
-    // it.
-    //
-    // If you extended the `HardhatConfig` type, you need to make sure that
-    // executing this function ensures that the `config` object is in a valid
-    // state for its type, including its extensions. For example, you may
-    // need to apply a default value, like in this example.
-    const userPath = userConfig.paths?.newPath;
-
-    let newPath: string;
-    if (userPath === undefined) {
-      newPath = path.join(config.paths.root, "newPath");
-    } else {
-      if (path.isAbsolute(userPath)) {
-        newPath = userPath;
-      } else {
-        // We resolve relative paths starting from the project's root.
-        // Please keep this convention to avoid confusion.
-        newPath = path.normalize(path.join(config.paths.root, userPath));
-      }
-    }
-
+    const definedPath = userConfig.metabaker.baseMetadataPath ?? "./metadata";
+    config.paths.baseMetadataPath = path.normalize(
+      path.join(config.paths.root, definedPath)
+    );
     config.metabaker = userConfig.metabaker;
-
-    config.paths.newPath = newPath;
   }
 );
 
@@ -112,34 +93,126 @@ async function fileFromPath(filePath: string) {
   return new File([content], path.basename(filePath));
 }
 
-async function storeNFT(
-  imagePath: string,
-  name: string,
-  description: string,
-  NFTStorageKey: string
+task(TASK_COMPILE, async (_taskArgs, env) => {
+  const basePath = env.config.paths.baseMetadataPath;
+
+  const imagesPath = getImageDir(env);
+  const metaPath = getMetaDir(env);
+  const templateFile = path.normalize(path.join(basePath, TEMPLATE_NAME));
+
+  fs.mkdirSync(imagesPath, { recursive: true });
+  fs.mkdirSync(metaPath, { recursive: true });
+
+  // add the template file if it doesn't exist already
+  if (!fs.existsSync(templateFile)) {
+    const templateFileContents = {
+      name: "nft name template token number $TOKEN_NUMBER",
+      description: "nft description",
+      image: "put a placeholder image here.jpg",
+    };
+    fs.writeFileSync(
+      templateFile,
+      JSON.stringify(templateFileContents, null, 2)
+    );
+  }
+});
+
+task(TASK_CLEAN, async (_taskArgs, env) => {
+  const tempPath = getUploadDir(env);
+  fs.rmdirSync(tempPath);
+});
+
+function getImageDir(hre: HardhatRuntimeEnvironment): string {
+  const basePath = hre.config.paths.baseMetadataPath;
+  return path.normalize(path.join(basePath, "./images"));
+}
+
+function getMetaDir(hre: HardhatRuntimeEnvironment): string {
+  const basePath = hre.config.paths.baseMetadataPath;
+  return path.normalize(path.join(basePath, "./metadata"));
+}
+
+function getUploadDir(hre: HardhatRuntimeEnvironment): string {
+  const basePath = hre.config.paths.baseMetadataPath;
+  const uploadPath = path.normalize(path.join(basePath, ".upload"));
+  fs.mkdirSync(uploadPath, { recursive: true });
+  return uploadPath;
+}
+
+async function getMetadata(env: HardhatRuntimeEnvironment): Promise<File[]> {
+  const uploadDir = getUploadDir(env);
+  return fs
+    .readdirSync(uploadDir)
+    .filter((value) => {
+      return value.endsWith(".json");
+    })
+    .map((value) => {
+      const blob = new Blob([
+        fs.readFileSync(path.normalize(path.join(uploadDir, value))),
+      ]);
+      return new File([blob], value);
+    });
+}
+
+async function processMetadata(
+  env: HardhatRuntimeEnvironment,
+  cid: string,
+  count: BigNumber
 ) {
-  // load the file from disk
-  const image = await fileFromPath(imagePath);
-
-  // create a new NFTStorage client using our API key
-  const nftstorage = new NFTStorage({ token: NFTStorageKey });
-
-  // call client.store, passing in the image & metadata
-  return nftstorage.store({
-    image,
-    name,
-    description,
-  });
+  const uploadDir = getUploadDir(env);
+  const metaDir = getMetaDir(env);
+  const totalNumber = fs.readdirSync(getMetaDir(env)).length;
+  let i = 1;
+  for (; i <= count.toNumber(); i++) {
+    const metaFile = path.normalize(path.join(metaDir, `${i}.json`));
+    const json = JSON.parse(fs.readFileSync(metaFile, { encoding: "utf-8" }));
+    json.image = `ipfs://${cid}/${i}.${env.config.metabaker.imageExtension}`;
+    const uploadFile = path.normalize(path.join(uploadDir, `${i}.json`));
+    fs.writeFileSync(uploadFile, JSON.stringify(json, null, 2));
+  }
+  const templateContent = fs.readFileSync(
+    path.normalize(path.join(env.config.paths.baseMetadataPath, TEMPLATE_NAME)),
+    { encoding: "utf-8" }
+  );
+  for (; i <= totalNumber; i++) {
+    // do template variables
+    const template = JSON.parse(templateContent);
+    template.name = template.name.replace("$TOKEN_NUMBER", `#${i}`);
+    const uploadFile = path.normalize(path.join(uploadDir, `${i}.json`));
+    fs.writeFileSync(uploadFile, JSON.stringify(template, null, 2));
+  }
 }
 
-async function getMetadata(count: BigNumber): Promise<File[]> {
-  // TODO
-  return [];
+async function getImages(
+  env: HardhatRuntimeEnvironment,
+  count: BigNumber
+): Promise<File[]> {
+  const uploadDir = getUploadDir(env);
+  return fs
+    .readdirSync(uploadDir)
+    .filter((value) => {
+      return value.endsWith(env.config.metabaker.imageExtension);
+    })
+    .map((value) => {
+      const blob = new Blob([
+        fs.readFileSync(path.normalize(path.join(uploadDir, value))),
+      ]);
+      return new File([blob], value);
+    });
 }
 
-async function getImages(count: BigNumber): Promise<File[]> {
-  // TODO
-  return [];
+async function processImages(env: HardhatRuntimeEnvironment, count: BigNumber) {
+  const uploadDir = getUploadDir(env);
+  const imageDir = getImageDir(env);
+  for (let i = 1; i <= count.toNumber(); i++) {
+    const originalPath = path.normalize(
+      path.join(imageDir, `${i}.${env.config.metabaker.imageExtension}`)
+    );
+    const uploadPath = path.normalize(
+      path.join(uploadDir, `${i}.${env.config.metabaker.imageExtension}`)
+    );
+    fs.copyFileSync(originalPath, uploadPath);
+  }
 }
 
 // Using this guide
@@ -172,6 +245,11 @@ task("publishMetaToNFTStorage", "send data to web3")
     try {
       if (countAsString === "contract") {
         // use count from contract
+        if (contractAddress.length === 0) {
+          throw new HardhatPluginError(
+            `Invalid address param: ${contractAddress}`
+          );
+        }
         const ethers = hre.ethers;
         const ethersContract = await ethers.getContractAt(abi, contractAddress);
         count = await ethersContract.functions.totalSupply();
@@ -180,6 +258,8 @@ task("publishMetaToNFTStorage", "send data to web3")
             `Invalid count parameter: ${countAsString}`
           );
         }
+      } else {
+        count = BigNumber.from(countAsString);
       }
     } catch (e: Error | any) {
       throw new HardhatPluginError(
@@ -194,8 +274,19 @@ task("publishMetaToNFTStorage", "send data to web3")
       );
     }
 
-    const imageFiles = await getImages(count);
-    const metaFiles = await getMetadata(count);
+    // make sure the upload dir is refreshed
+    fs.rmSync(getUploadDir(hre), { recursive: true, force: true });
+
+    await processImages(hre, count);
+    const imageFiles = await getImages(hre, count);
+    // Publish to nft storage
+    // https://nft.storage/docs/#using-the-javascript-api
+    const endpoint = new URL("https://api.nft.storage");
+    const storage = new NFTStorage({ endpoint, token: nftStorageKey });
+    const cid = await storage.storeDirectory(imageFiles);
+
+    await processMetadata(hre, cid, count);
+    const metaFiles = await getMetadata(hre);
 
     if (imageFiles.length === 0) {
       console.error("Empty images");
@@ -207,14 +298,9 @@ task("publishMetaToNFTStorage", "send data to web3")
       return;
     }
 
-    // Publish to nft storage
-    // https://nft.storage/docs/#using-the-javascript-api
-    const endpoint = new URL("https://api.nft.storage");
-    const storage = new NFTStorage({ endpoint, token: nftStorageKey });
+    // TODO: make CAR for upload optimization
 
-    // TODO: make CAR or upload directory
-    const cid = await storage.storeDirectory(imageFiles);
-    const cidMeta = await storage.storeDirectory(imageFiles);
+    const cidMeta = await storage.storeDirectory(metaFiles);
     console.log("Image CID:", cid);
     console.log("Meta CID:", cidMeta);
     const status = await storage.status(cid);
