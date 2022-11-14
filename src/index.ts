@@ -93,7 +93,8 @@ async function fileFromPath(filePath: string) {
   return new File([content], path.basename(filePath));
 }
 
-task(TASK_COMPILE, async (_taskArgs, env) => {
+task(TASK_COMPILE).setAction(async (_taskArgs, env, runSuper) => {
+  await runSuper(_taskArgs);
   const basePath = env.config.paths.baseMetadataPath;
 
   const imagesPath = getImageDir(env);
@@ -250,7 +251,7 @@ task("publishMetaToNFTStorage", "send data to web3")
         }
         const ethers = hre.ethers;
         const ethersContract = await ethers.getContractAt(abi, contractAddress);
-        count = await ethersContract.functions.totalSupply();
+        count = await ethersContract.totalSupply();
       } else {
         count = BigNumber.from(countAsString);
       }
@@ -275,14 +276,14 @@ task("publishMetaToNFTStorage", "send data to web3")
     // make sure the upload dir is refreshed
     fs.rmSync(getUploadDir(hre), { recursive: true, force: true });
 
-    console.log("Processing images...");
+    console.log(`Processing ${count.toString()} images...`);
     await processImages(hre, count);
     const imageFiles = await getImages(hre, count);
     // Publish to nft storage
     // https://nft.storage/docs/#using-the-javascript-api
     const endpoint = new URL("https://api.nft.storage");
     const storage = new NFTStorage({ endpoint, token: nftStorageKey });
-    console.log("Storing images...");
+    console.log(`Storing ${count.toString()} images...`);
     const cid = await storage.storeDirectory(imageFiles);
 
     console.log("Processing metadata...");
