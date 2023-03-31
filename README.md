@@ -12,6 +12,8 @@ https://nft.storage/ is used as the web3 storage.
 
 https://nft.storage/docs/#using-the-javascript-api
 
+![Meta Baker Image](metabaker.png "Meta Baker Image")
+
 ## Installation
 
 To use this plugins
