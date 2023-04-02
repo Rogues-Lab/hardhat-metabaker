@@ -3,12 +3,12 @@
 // The 'fs' builtin module on Node.js provides access to the file system
 // tslint:disable-next-line:no-implicit-dependencies
 import "@nomiclabs/hardhat-ethers/internal/type-extensions";
+import axios from "axios";
 import { BigNumber } from "ethers";
 import fs from "fs";
 import { TASK_CLEAN, TASK_COMPILE } from "hardhat/builtin-tasks/task-names";
 import { extendConfig, task, types } from "hardhat/config";
 import { HardhatPluginError } from "hardhat/plugins";
-import axios from "axios";
 import {
   HardhatConfig,
   HardhatRuntimeEnvironment,
@@ -23,7 +23,7 @@ import "./type-extensions";
 
 const TEMPLATE_NAME = "template.json";
 
-//Load config
+// Load config
 extendConfig(
   (config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) => {
     const definedPath = userConfig.metabaker.baseMetadataPath ?? "./metadata";
@@ -120,7 +120,7 @@ async function getMetadata(env: HardhatRuntimeEnvironment): Promise<File[]> {
       const blob = new Blob([
         fs.readFileSync(path.normalize(path.join(uploadDir, value))),
       ]);
-      //Remove the .json extension so the baseURI default implementation works correctly(baseuri / tokenid)
+      // Remove the .json extension so the baseURI default implementation works correctly(baseuri / tokenid)
       return new File([blob], value.replace(".json", ""));
     });
 }
@@ -144,14 +144,11 @@ async function processMetadata(
   }
 }
 
-
-async function scaffoldMetadataFromTemplate(
-  env: HardhatRuntimeEnvironment
-) {
+async function scaffoldMetadataFromTemplate(env: HardhatRuntimeEnvironment) {
   const uploadDir = getUploadDir(env);
   const metaDir = getMetaDir(env);
   const totalNumber = fs.readdirSync(getMetaDir(env)).length;
-  let i = 0
+  let i = 0;
 
   // Will create it if it doesn't exist
   checkTemplate(env);
@@ -160,7 +157,7 @@ async function scaffoldMetadataFromTemplate(
     path.normalize(path.join(env.config.paths.baseMetadataPath, TEMPLATE_NAME)),
     { encoding: "utf-8" }
   );
-  
+
   for (; i < totalNumber; i++) {
     // do template variables
     const template = JSON.parse(templateContent);
@@ -188,7 +185,12 @@ async function getImages(
     });
 }
 
-async function processCountArg(countAsString: string, contractAddress: string, abi: any, hre: HardhatRuntimeEnvironment) {
+async function processCountArg(
+  countAsString: string,
+  contractAddress: string,
+  abi: any,
+  hre: HardhatRuntimeEnvironment
+) {
   let count: BigNumber = BigNumber.from(0);
   try {
     if (countAsString === "contract") {
@@ -207,7 +209,7 @@ async function processCountArg(countAsString: string, contractAddress: string, a
     } else {
       count = BigNumber.from(countAsString);
     }
-    if ((BigNumber.from(0)).eq(count)) {
+    if (BigNumber.from(0).eq(count)) {
       throw new HardhatPluginError(
         "hardhat-metabaker",
         `Invalid count parameter: ${countAsString}`
@@ -269,34 +271,12 @@ task("publishMetaToNFTStorage", "send data to web3")
 
     // get count from input or optionally from contract
     const countAsString: string = taskArgs.count;
-    const count: BigNumber = await processCountArg(countAsString, contractAddress, abi, hre);  
-
-
-    let count: BigNumber = BigNumber.from(0);
-    try {
-      if (countAsString === "contract") {
-        // use count from contract
-        if (contractAddress.length === 0) {
-          throw new HardhatPluginError(
-            `Invalid address param: ${contractAddress}`
-          );
-        }
-        const ethers = hre.ethers;
-        const ethersContract = await ethers.getContractAt(abi, contractAddress);
-        count = await ethersContract.totalSupply();
-      } else {
-        count = BigNumber.from(countAsString);
-      }
-      if (count.eq(BigNumber.from(0))) {
-        throw new HardhatPluginError(
-          `Invalid count parameter: ${countAsString}`
-        );
-      }
-    } catch (e: Error | any) {
-      throw new HardhatPluginError(
-        e?.message ?? "Error parsing count parameter"
-      ); // parse error or our own
-    }
+    const count: BigNumber = await processCountArg(
+      countAsString,
+      contractAddress,
+      abi,
+      hre
+    );
 
     // require nftStorageKey
     if (!nftStorageKey) {
@@ -325,9 +305,9 @@ task("publishMetaToNFTStorage", "send data to web3")
     const scaffoldMetadata: boolean = taskArgs.scaffoldmetadata === "true";
     console.log("Processing metadata...");
 
-    if (scaffoldMetadata === true) {
+    if (scaffoldMetadata) {
       await scaffoldMetadataFromTemplate(hre);
-    } else{
+    } else {
       await processMetadata(hre, cid, count);
     }
     const metaFiles = await getMetadata(hre);
@@ -358,11 +338,8 @@ task("publishMetaToNFTStorage", "send data to web3")
     console.log(
       "(you may need a trailing slash depending on your smart contract)"
     );
-
-
   });
 
-  
 // Define task to download NFT metadata and images
 task("downloadMintedData", "Downloads metadata and images for an NFT contract")
   .addParam("contract", "Contract name to sync") // add contract parameters
@@ -380,10 +357,9 @@ task("downloadMintedData", "Downloads metadata and images for an NFT contract")
     const imageDir = getImageDir(hre);
     checkDirs(hre);
 
-    // read the artifact contract   
+    // read the artifact contract
     const { contract, address: contractAddress } = args;
     const { abi } = await hre.artifacts.readArtifact(contract);
-
 
     // Load ERC721 contract
     const ethers = hre.ethers;
@@ -391,8 +367,12 @@ task("downloadMintedData", "Downloads metadata and images for an NFT contract")
 
     // get count from input or optionally from contract
     const countAsString: string = args.count;
-    const count: BigNumber = await processCountArg(countAsString, contractAddress, abi, hre);  
-
+    const count: BigNumber = await processCountArg(
+      countAsString,
+      contractAddress,
+      abi,
+      hre
+    );
 
     console.log(`About to  download ${count.toNumber()} tokens`);
     // Loop through all token IDs and download metadata and image
@@ -405,16 +385,22 @@ task("downloadMintedData", "Downloads metadata and images for an NFT contract")
         const metadata = await axios.get(tokenURI);
         // console.log(`Finished tokenURI ${tokenURI}`);
 
-        fs.writeFileSync(`${metaDir}/${i}.json`,  JSON.stringify(metadata.data));
+        fs.writeFileSync(`${metaDir}/${i}.json`, JSON.stringify(metadata.data));
 
         // Get token image URI (assumes image is stored at "image" key in metadata)
         const imageURI = metadata.data.image;
         const filename = path.basename(new URL(imageURI).pathname);
 
         // Download image
-        const image = await axios.get(imageURI, { responseType: "arraybuffer" });
-        fs.writeFileSync(`${imageDir}/${filename}`, Buffer.from(image.data), { encoding: null });
-        console.log(`Finished downloading ${i} token - ${imageDir}/${filename}`);
+        const image = await axios.get(imageURI, {
+          responseType: "arraybuffer",
+        });
+        fs.writeFileSync(`${imageDir}/${filename}`, Buffer.from(image.data), {
+          encoding: null,
+        });
+        console.log(
+          `Finished downloading ${i} token - ${imageDir}/${filename}`
+        );
       } catch (err) {
         console.error(`Error downloading token ${i}: ${err}`);
       }
