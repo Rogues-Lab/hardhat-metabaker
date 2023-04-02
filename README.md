@@ -12,6 +12,8 @@ https://nft.storage/ is used as the web3 storage.
 
 https://nft.storage/docs/#using-the-javascript-api
 
+![Meta Baker Image](metabaker.png "Meta Baker Image")
+
 ## Installation
 
 To use this plugins
@@ -110,8 +112,9 @@ We should now see the new tasks in hardhat output, like below:
 ```bash
 AVAILABLE TASKS:
 
-  accounts              Prints the list of accounts
-  check                 Check whatever you need
-  clean                 Clears the cache and deletes all artifacts
-  collectNftMetadata    Collects Metadata into local folder for processing
+  accounts                   Prints the list of accounts
+  check                      Check whatever you need
+  clean                      Clears the cache and deletes all artifacts
+  downloadMintedData         Collects Metadata into local folder for processing
+  publishMetaToNFTStorage    Publish metadata to NFT Storage
 ```
